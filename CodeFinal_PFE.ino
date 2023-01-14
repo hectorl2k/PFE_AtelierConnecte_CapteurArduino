@@ -20,7 +20,7 @@ void SetupEthernet();
 
 //////////////// Capteur Vibration ////////////////////////////////////                
 
-    #define FonctionnementVibra true                  // Si aucun capteur mettre false sinon true 
+    #define Fogit ounctionnementVibra true                  // Si aucun capteur mettre false sinon true 
     #define Nbr_CaptDist_Vibra 1                           // Nombre de capteur de vibration
     const byte PinCapteurVibra[Nbr_CaptDist_Vibra]= {A1} ;        // pin capteur vibration
 
