@@ -3,7 +3,7 @@
 #include <SPI.h>
 
 //////////////// Génrérale ////////////////////////////////////
-String ID_Boitier="ROMA0";
+String ID_Boitier="TestC";
 String urlScript= "/PFE_AtelierConnecte_CapteurWeb/BDD/add.php";
 #define delay_EnvoiServ 5000
 
@@ -15,59 +15,60 @@ EthernetClient client;
 elapsedMillis timer_sendData;
 
 
- /*  Fonction Utilisée  Internet */  
+ /*  Fonction Utilisée  Internet */
 void SetupEthernet();
 
-//////////////// Capteur Vibration ////////////////////////////////////                
+//////////////// Capteur Vibration ////////////////////////////////////
 
-    #define Fogit ounctionnementVibra true                  // Si aucun capteur mettre false sinon true 
+    #define FonctionnementVibra true                  // Si aucun capteur mettre false sinon true
     #define Nbr_CaptDist_Vibra 1                           // Nombre de capteur de vibration
-    const byte PinCapteurVibra[Nbr_CaptDist_Vibra]= {A1} ;        // pin capteur vibration
+    const byte PinCapteurVibra[Nbr_CaptDist_Vibra]= {A5} ;        // pin capteur vibration
 
     #define delay_VibraGetRes 5000                         // Temps durant lequel on calul la vibration moyenne
-    #define delay_PeriodVibra 100                          // Temps durant lequel on calul le vibration 
-  
+    #define delay_PeriodVibra 100                          // Temps durant lequel on calul le vibration
+
     elapsedMillis timer_getResVibra;                       // Timer maj vibration
     elapsedMillis timer_getNewDataVibra;                       // Timer Get vibration
 
 
-    /*  Fonction Utilisée  Vibration */  
-    
+    /*  Fonction Utilisée  Vibration */
+
     bool setupVibra(void);            // Setup Capteur de Vibration
-    float GetVibra(byte pin_Vibra);    // Reucuperer en % 
-    void gestionVibration();  
+    float GetVibra(byte pin_Vibra);    // Reucuperer en %
+    void gestionVibration();
 
 //////////////// Capteur Distance ////////////////////////////////////
 
     #define delay_PeriodDist 100                      // toutes les x on recupere la distance
 
-    
+
        /////     MODE FLUX    /////
-    #define FonctionnementModeFlux true                  // Si aucun capteur mettre false sion true 
+    #define FonctionnementModeFlux false                  // Si aucun capteur mettre false sion true
     #define delay_FluxGetRes 5000                         // Temps durant lequel on calul le flux
     #define Nbr_CaptDist_Flux 1                           // Nombre de capteur en mode flux
     const byte PinCapteurDistFlux[Nbr_CaptDist_Flux][2]= {{2,3}} ;        // nbr Capteur de flux, ( pin triger, pin echo)
-    const float DistDetectObject[Nbr_CaptDist_Flux]={100};        // Distance en mm pour detecter un objet  
+    const float DistDetectObject[Nbr_CaptDist_Flux]={100};        // Distance en mm pour detecter un objet
     elapsedMillis timer_getResFlux;                       // Timer maj flux
     elapsedMillis timer_getNewDataFlux;                       // Timer Get distance
 
        /////  MODE DISTANCE MOY   /////
-    #define FonctionnementModeDist true                  // Si aucun capteur mettre false sion true 
+    #define FonctionnementModeDist true                  // Si aucun capteur mettre false sion true
     #define delay_DistGetRes 5000                      // Temps durant lequel on calul la distance moyenne
-    #define Nbr_CaptDist_Dist 2 
+    #define Nbr_CaptDist_Dist 1
     const byte PinCapteurDistDist[Nbr_CaptDist_Dist][2]= {{2,3}} ;     // nbr Capteur de flux, ( pin triger, pin echo)
     elapsedMillis timer_getResDist;                       // Timer Get distance
     elapsedMillis timer_getNewDataDist;                       // Timer Get distance
-    
 
-   
-    /*  Fonction Utilisée  Distance */  
-    
+
+
+    /*  Fonction Utilisée  Distance */
+
     float getDist_HCSR04(byte pinCapt[]);
     void setup_HCSR04();
-    void gestionDist_Flux(); 
+    void gestionDist_Flux();
     void gestionDist_Dist();
-    
+
+
 
 
 
@@ -81,62 +82,49 @@ void SetupEthernet();
 
   int i_nbr_mesure_Vibra[Nbr_CaptDist_Vibra]={0};       // Nombre de mesure
   float tempResVibra[Nbr_CaptDist_Vibra]={0};           // addition des mesures
-  float ResVibra[Nbr_CaptDist_Vibra]={0};               // Variable resultat vibration moyenne 
+  float ResVibra[Nbr_CaptDist_Vibra]={0};               // Variable resultat vibration moyenne
 
 
-  /*  Const HC-SR04   */ 
+  /*  Const HC-SR04   */
   const unsigned long MEASURE_TIMEOUT = 25000UL; /* const Timout : 25ms = ~8m à 340m/s  */
   const float SOUND_SPEED = 340.0 / 1000;         /* Vitesse du son dans l'air en mm/us */
   #define pin_Trigger 0
   #define pin_Echo 1
   bool detectObject[Nbr_CaptDist_Flux] ={false};
-  
+
   int tempResFlux[Nbr_CaptDist_Flux]={0};             // Variable Temp result flux
-  float ResFlux[Nbr_CaptDist_Flux]={0};                    // Variable resultat flux 
+  float ResFlux[Nbr_CaptDist_Flux]={0};                    // Variable resultat flux
 
   int i_nbr_mesure_dist[Nbr_CaptDist_Dist]={0};       // Nombre de mesure
   float tempResDist[Nbr_CaptDist_Dist]={0};  // addition des mesures
-  float ResDist[Nbr_CaptDist_Dist]={0};                    // Variable resultat distance moyenne 
+  float ResDist[Nbr_CaptDist_Dist]={0};                    // Variable resultat distance moyenne
   String urlDist="";
   String urlFlux="";
   String urlVibra="";
-  
-  
+  bool FirstRequete=true;
 
 
-  
 
 void setup() {
-  Serial.begin(115200); 
-  SetupEthernet(); 
-  setupVibra();
+  Serial.begin(115200);
+  SetupEthernet();
+  SetupVibra();
   setup_HCSR04();
-  
-  
-  timer_getResFlux=0;    // Reset TIMER 
+  timer_getResFlux=0;    // Reset TIMER
+
 
 }
+
 
 void loop() {
-
-   if( FonctionnementVibra == true)
-  {
-    gestionVibration();
-  }  
+  if( FonctionnementVibra == true)
+    {gestionVibration();}
   if( FonctionnementModeFlux == true)
-  {
-    gestionDist_Flux();
-  }
-
- if( FonctionnementModeDist == true)
-  {
-    gestionDist_Dist();
-  }
-SendData();
-
+    {gestionDist_Flux();}
+  if( FonctionnementModeDist == true)
+    {gestionDist_Dist();}
+  EnvoiServeur();
 }
-
-
 
 
 
@@ -167,7 +155,7 @@ float getVibra(byte pin_Vibra)
 void gestionVibration()
 {
   float resVibra;
-   
+
 
    if (timer_getNewDataVibra > delay_PeriodVibra)
    {
@@ -176,7 +164,7 @@ void gestionVibration()
     {
       resVibra=  getVibra(PinCapteurVibra[i]);      // Reucpere la vibration
       tempResVibra[i] += resVibra;
-      i_nbr_mesure_Vibra[i]++;     
+      i_nbr_mesure_Vibra[i]++;
     }
    }
     if (timer_getResVibra > delay_VibraGetRes)
@@ -188,14 +176,20 @@ void gestionVibration()
       ResVibra[i]=(tempResVibra[i]*1.0)/i_nbr_mesure_Vibra[i];
       urlVibra+="&Vibration"+String(i)+"="+String(ResVibra[i]);
 
+
+     // Serial.print("Fin de calcul de la vibration Moyenne, nb itération : ");
+     // Serial.print(i_nbr_mesure_Vibra[i]+1);
+     // Serial.print("Vibration moyenne : ");
+     // Serial.println(ResVibra[i]);
+
       tempResVibra[i]=0;
       i_nbr_mesure_Vibra[i]=0;
-      Serial.println(ResVibra[i]);
+
     }
    }}
 
 void setup_HCSR04()
-{ 
+{
   if(FonctionnementModeFlux == true)
   {
     for(int i=0;i<Nbr_CaptDist_Flux;i++)
@@ -224,10 +218,10 @@ float getDist_HCSR04(byte pinCapt[])
   digitalWrite(pinCapt[pin_Trigger], HIGH);
   delayMicroseconds(10);
   digitalWrite(pinCapt[pin_Trigger], LOW);
-  
+
   /* 2. Mesure le temps echo l'envoi de l'impulsion ultrasonique et son écho (si il existe) */
   long measure = pulseIn(pinCapt[pin_Echo], HIGH, MEASURE_TIMEOUT);
-   
+
   /* 3. Calcul la distance à partir du temps mesuré */
   float distance_mm = measure / 2.0 * SOUND_SPEED;
   delay(10);
@@ -242,15 +236,15 @@ float getDist_HCSR04(byte pinCapt[])
 void gestionDist_Flux()
 {
   float resDist;
- 
+
    if (timer_getNewDataFlux > delay_PeriodDist)
    {
     timer_getNewDataFlux=0;       //Reset Timer
     for(int i=0;i<Nbr_CaptDist_Flux;i++)
     {
       resDist=  getDist_HCSR04(PinCapteurDistFlux[i]);      // Reucpere la distance
-      
-      if( resDist < DistDetectObject[i] && detectObject[i]==false)     // regarde si on detcte un nouvel objet 
+
+      if( resDist < DistDetectObject[i] && detectObject[i]==false)     // regarde si on detcte un nouvel objet
       {
         detectObject[i]=true;
          tempResFlux[i]++;
@@ -260,7 +254,7 @@ void gestionDist_Flux()
       if(resDist >DistDetectObject[i] && detectObject[i]==true)       // Fin de la detection de l'objet;
       {
         detectObject[i]=false;
-      }  
+      }
     }
    }
 
@@ -270,14 +264,14 @@ void gestionDist_Flux()
     urlFlux="&nbrDistance_Flux="+String(Nbr_CaptDist_Flux);     // prepare les info a envoyer au serveur
      for(int i=0;i<Nbr_CaptDist_Flux;i++)
     {
-      
+
       ResFlux[i]=tempResFlux[i]/(delay_FluxGetRes/1000.0);    // Calcul nbr Objet Seconde
       urlFlux+="&Distance_Flux"+String(i)+"="+String(ResFlux[i]);
       tempResFlux[i]=0;
-      Serial.println(ResFlux[i]);
-      
+     // Serial.println(ResFlux[i]);
+
     }
-   }  
+   }
 }
 
 
@@ -287,7 +281,7 @@ void gestionDist_Flux()
 void gestionDist_Dist()
 {
   float resDist;
- 
+
    if (timer_getNewDataDist > delay_PeriodDist)
    {
     timer_getNewDataDist=0;       //Reset Timer
@@ -295,7 +289,7 @@ void gestionDist_Dist()
     {
       resDist=  getDist_HCSR04(PinCapteurDistDist[i]);      // Reucpere la distance
       tempResDist[i] += resDist;
-      i_nbr_mesure_dist[i]++;     
+      i_nbr_mesure_dist[i]++;
     }
    }
     if (timer_getResDist > delay_DistGetRes)
@@ -307,19 +301,24 @@ void gestionDist_Dist()
       ResDist[i]=(tempResDist[i]*1.0)/i_nbr_mesure_dist[i];
       urlDist+="&Distance_Dist"+String(i)+"="+String(ResDist[i]);
 
+      // Serial.print("Fin de calcul de la Disatnce Moyenne mm, nb itération : ");
+      // Serial.print(i_nbr_mesure_dist[i]);
+      // Serial.print("  Mesure  moyenne en mm : ");
+      // Serial.println(ResDist[i]+1);
+
       tempResDist[i]=0;
       i_nbr_mesure_dist[i]=0;
-      Serial.println(ResDist[i]);   
+      //Serial.println(ResDist[i]);
     }
-   }  
-  
+   }
+
 }
 
 
 void SetupEthernet()
 {
 
-  
+
   if (Ethernet.linkStatus() == LinkOFF) {
       Serial.println("Ethernet cable is not connected.");
     }
@@ -329,25 +328,34 @@ void SetupEthernet()
 
 }
 
-void SendData()
+void EnvoiServeur()
 {
-  if(timer_sendData >= delay_EnvoiServ)
+  if (FirstRequete ==true && timer_sendData >= (delay_EnvoiServ*2))
+  {
+    FirstRequete =false;
+  }
+
+  if(timer_sendData >= delay_EnvoiServ && FirstRequete ==false)
   {
       timer_sendData=0;
         if (client.connect(server, port)) {
-         Serial.println("connected - Try to send Data");
-         Serial.print("Data Send");     //YOUR URL      
+          Serial.println("Boitier Connecté au serveur");
+
+
+        // Serial.println("connected - Try to send Data");
+         //Serial.println("Data Send");     //YOUR URL
          String url="GET " + urlScript + "?ID_Boitier=" + ID_Boitier + urlVibra + urlDist + urlFlux ;
-       
+         //Serial.println("URL : " +url);
+         //Serial.println("\n\n");
          client.println(url);     //YOUR URL
          client.println(" HTTP/1.1");
          client.println("Host: 192.168.2.5");
          client.println("Connection: close");
          client.println();
         } else {
-    
+
     Serial.println("connection failed");
   }
   }
 }
-   
+
