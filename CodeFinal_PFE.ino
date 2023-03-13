@@ -3,9 +3,9 @@
 #include <SPI.h>
 
 //////////////// Génrérale ////////////////////////////////////
-String ID_Boitier="TestC";
+String ID_Boitier="Soutenance";
 String urlScript= "/PFE_AtelierConnecte_CapteurWeb/BDD/add.php";
-#define delay_EnvoiServ 5000
+#define delay_EnvoiServ 500
 
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0x9E, 0x1E };
 byte ip[] = { 192, 168, 2, 5 };
@@ -24,8 +24,8 @@ void SetupEthernet();
     #define Nbr_CaptDist_Vibra 1                           // Nombre de capteur de vibration
     const byte PinCapteurVibra[Nbr_CaptDist_Vibra]= {A5} ;        // pin capteur vibration
 
-    #define delay_VibraGetRes 5000                         // Temps durant lequel on calul la vibration moyenne
-    #define delay_PeriodVibra 100                          // Temps durant lequel on calul le vibration
+    #define delay_VibraGetRes 500                         // Temps durant lequel on calul la vibration moyenne
+    #define delay_PeriodVibra 20                          // Temps durant lequel on calul le vibration
 
     elapsedMillis timer_getResVibra;                       // Timer maj vibration
     elapsedMillis timer_getNewDataVibra;                       // Timer Get vibration
@@ -39,12 +39,12 @@ void SetupEthernet();
 
 //////////////// Capteur Distance ////////////////////////////////////
 
-    #define delay_PeriodDist 100                      // toutes les x on recupere la distance
+    #define delay_PeriodDist 50                      // toutes les x on recupere la distance
 
 
        /////     MODE FLUX    /////
-    #define FonctionnementModeFlux false                  // Si aucun capteur mettre false sion true
-    #define delay_FluxGetRes 5000                         // Temps durant lequel on calul le flux
+    #define FonctionnementModeFlux true                  // Si aucun capteur mettre false sion true
+    #define delay_FluxGetRes 500                         // Temps durant lequel on calul le flux
     #define Nbr_CaptDist_Flux 1                           // Nombre de capteur en mode flux
     const byte PinCapteurDistFlux[Nbr_CaptDist_Flux][2]= {{2,3}} ;        // nbr Capteur de flux, ( pin triger, pin echo)
     const float DistDetectObject[Nbr_CaptDist_Flux]={100};        // Distance en mm pour detecter un objet
@@ -53,7 +53,7 @@ void SetupEthernet();
 
        /////  MODE DISTANCE MOY   /////
     #define FonctionnementModeDist true                  // Si aucun capteur mettre false sion true
-    #define delay_DistGetRes 5000                      // Temps durant lequel on calul la distance moyenne
+    #define delay_DistGetRes 500                      // Temps durant lequel on calul la distance moyenne
     #define Nbr_CaptDist_Dist 1
     const byte PinCapteurDistDist[Nbr_CaptDist_Dist][2]= {{2,3}} ;     // nbr Capteur de flux, ( pin triger, pin echo)
     elapsedMillis timer_getResDist;                       // Timer Get distance
@@ -129,7 +129,7 @@ void loop() {
 
 
 
-bool setupVibra(void)
+bool SetupVibra(void)
 {
   if(FonctionnementVibra==true)
   {
@@ -358,4 +358,3 @@ void EnvoiServeur()
   }
   }
 }
-
