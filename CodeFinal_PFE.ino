@@ -1,6 +1,7 @@
 #include <elapsedMillis.h>
 #include <Ethernet.h>
 #include <SPI.h>
+#include <SharpIR.h>
 
 //////////////// Génrérale ////////////////////////////////////
 String ID_Boitier="Soutenance";
@@ -40,14 +41,14 @@ void SetupEthernet();
 //////////////// Capteur Distance ////////////////////////////////////
 
     #define delay_PeriodDist 50                      // toutes les x on recupere la distance
-
-
+    #define model 1080
+    
        /////     MODE FLUX    /////
     #define FonctionnementModeFlux true                  // Si aucun capteur mettre false sion true
-    #define delay_FluxGetRes 500                         // Temps durant lequel on calul le flux
+    #define delay_FluxGetRes 5000                         // Temps durant lequel on calul le flux
     #define Nbr_CaptDist_Flux 1                           // Nombre de capteur en mode flux
-    const byte PinCapteurDistFlux[Nbr_CaptDist_Flux][2]= {{2,3}} ;        // nbr Capteur de flux, ( pin triger, pin echo)
-    const float DistDetectObject[Nbr_CaptDist_Flux]={100};        // Distance en mm pour detecter un objet
+    const int PinCapteurDistFluxSharp[Nbr_CaptDist_Flux][2]= {{A0,1080}} ;  // Pin + model 
+    const float DistDetectObject[Nbr_CaptDist_Flux]={200};        // Distance en mm pour detecter un objet
     elapsedMillis timer_getResFlux;                       // Timer maj flux
     elapsedMillis timer_getNewDataFlux;                       // Timer Get distance
 
@@ -55,18 +56,19 @@ void SetupEthernet();
     #define FonctionnementModeDist true                  // Si aucun capteur mettre false sion true
     #define delay_DistGetRes 500                      // Temps durant lequel on calul la distance moyenne
     #define Nbr_CaptDist_Dist 1
-    const byte PinCapteurDistDist[Nbr_CaptDist_Dist][2]= {{2,3}} ;     // nbr Capteur de flux, ( pin triger, pin echo)
+    const int PinCapteurDistDistSharp[Nbr_CaptDist_Dist][2]= {{A0,1080}} ;  
+
+    
     elapsedMillis timer_getResDist;                       // Timer Get distance
     elapsedMillis timer_getNewDataDist;                       // Timer Get distance
 
 
 
     /*  Fonction Utilisée  Distance */
-
-    float getDist_HCSR04(byte pinCapt[]);
-    void setup_HCSR04();
-    void gestionDist_Flux();
-    void gestionDist_Dist();
+   void Setup_Sharp();
+   float getDist_Sharp();
+   void gestionDist_Flux();
+   void gestionDist_Dist();
 
 
 
@@ -85,11 +87,6 @@ void SetupEthernet();
   float ResVibra[Nbr_CaptDist_Vibra]={0};               // Variable resultat vibration moyenne
 
 
-  /*  Const HC-SR04   */
-  const unsigned long MEASURE_TIMEOUT = 25000UL; /* const Timout : 25ms = ~8m à 340m/s  */
-  const float SOUND_SPEED = 340.0 / 1000;         /* Vitesse du son dans l'air en mm/us */
-  #define pin_Trigger 0
-  #define pin_Echo 1
   bool detectObject[Nbr_CaptDist_Flux] ={false};
 
   int tempResFlux[Nbr_CaptDist_Flux]={0};             // Variable Temp result flux
@@ -109,7 +106,7 @@ void setup() {
   Serial.begin(115200);
   SetupEthernet();
   SetupVibra();
-  setup_HCSR04();
+  Setup_Sharp();
   timer_getResFlux=0;    // Reset TIMER
 
 
@@ -188,16 +185,51 @@ void gestionVibration()
     }
    }}
 
-void setup_HCSR04()
+
+
+
+
+float getDist_Sharp (int pinCapt[])
+{   int ir_val[25] = {};
+    int distanceCM;
+    float current;
+    int median;
+
+   for (int i=0; i<25; i++){
+        // Read analog value
+        ir_val[i] = analogRead(pinCapt[0]); 
+    }
+
+    for(int i=0; i<(25-1); i++) {
+        bool flag = true;
+        for(int o=0; o<(25-(i+1)); o++) {
+            if(ir_val[o] > ir_val[o+1]) {
+                int t = ir_val[o];
+                ir_val[o] = ir_val[o+1];
+                ir_val[o+1] = t;
+                flag = false;  
+            }
+        }
+    }
+    median = ir_val[25/2]; 
+    
+    if (pinCapt[1]==1080) {
+        distanceCM = 29.988 * pow(map(median, 0, 1023, 0, 5000)/1000.0, -1.173);
+    }
+     return (distanceCM*10.0);
+}
+
+
+
+
+
+void Setup_Sharp()
 {
   if(FonctionnementModeFlux == true)
   {
     for(int i=0;i<Nbr_CaptDist_Flux;i++)
     {
-          /* Initialise les broches */
-      pinMode(PinCapteurDistFlux[i][pin_Trigger], OUTPUT);
-      digitalWrite(PinCapteurDistFlux[i][pin_Trigger], LOW); // La broche TRIGGER doit être à LOW au repos
-      pinMode(PinCapteurDistFlux[i][pin_Echo], INPUT);
+      pinMode (PinCapteurDistFluxSharp[i][0], INPUT);
     }
   }
 
@@ -205,30 +237,10 @@ void setup_HCSR04()
   {
     for(int i=0;i<Nbr_CaptDist_Dist;i++)
     {
-          /* Initialise les broches */
-      pinMode(PinCapteurDistDist[i][pin_Trigger], OUTPUT);
-      digitalWrite(PinCapteurDistDist[i][pin_Trigger], LOW); // La broche TRIGGER doit être à LOW au repos
-      pinMode(PinCapteurDistDist[i][pin_Echo], INPUT);
+        pinMode (PinCapteurDistDistSharp[i][0], INPUT);
     }
-  }
+  }  
 }
-float getDist_HCSR04(byte pinCapt[])
-{
-  /* 1. Lance une mesure de distance en envoyant une impulsion HIGH de 10µs sur la broche TRIGGER */
-  digitalWrite(pinCapt[pin_Trigger], HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pinCapt[pin_Trigger], LOW);
-
-  /* 2. Mesure le temps echo l'envoi de l'impulsion ultrasonique et son écho (si il existe) */
-  long measure = pulseIn(pinCapt[pin_Echo], HIGH, MEASURE_TIMEOUT);
-
-  /* 3. Calcul la distance à partir du temps mesuré */
-  float distance_mm = measure / 2.0 * SOUND_SPEED;
-  delay(10);
-  return distance_mm;
-}
-
-
 
 
 
@@ -242,11 +254,14 @@ void gestionDist_Flux()
     timer_getNewDataFlux=0;       //Reset Timer
     for(int i=0;i<Nbr_CaptDist_Flux;i++)
     {
-      resDist=  getDist_HCSR04(PinCapteurDistFlux[i]);      // Reucpere la distance
+        resDist=  getDist_Sharp(PinCapteurDistFluxSharp[i]);      // Reucpere la distance
+
+      
 
       if( resDist < DistDetectObject[i] && detectObject[i]==false)     // regarde si on detcte un nouvel objet
       {
         detectObject[i]=true;
+        Serial.println("NEW OBJECT");
          tempResFlux[i]++;
       }
 
@@ -287,7 +302,7 @@ void gestionDist_Dist()
     timer_getNewDataDist=0;       //Reset Timer
     for(int i=0;i<Nbr_CaptDist_Dist;i++)
     {
-      resDist=  getDist_HCSR04(PinCapteurDistDist[i]);      // Reucpere la distance
+      resDist=  getDist_Sharp(PinCapteurDistDistSharp[i]);      // Reucpere la distance
       tempResDist[i] += resDist;
       i_nbr_mesure_dist[i]++;
     }
@@ -353,8 +368,10 @@ void EnvoiServeur()
          client.println("Connection: close");
          client.println();
         } else {
-
+    String url="GET " + urlScript + "?ID_Boitier=" + ID_Boitier + urlVibra + urlDist + urlFlux ;
+   // Serial.println(url);
     Serial.println("connection failed");
+    
   }
   }
 }
